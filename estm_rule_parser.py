@@ -37,10 +37,7 @@ class ESTMRuleParser():
                         rule_dict[cur_elm][(rx,ry)].add(self.matrix[nx][ny])
         flattened_matrix = "".join("".join(line) for line in self.matrix)
         counts = Counter(flattened_matrix)
-        c_min = min(counts.values())
-        c_max = max(counts.values())
         for k in counts:
-            counts[k] = (counts[k]-c_min)/(c_max-c_min)
+            counts[k] /= len(flattened_matrix)
         weights = counts
-        print(weights)
         return rule_dict, weights
