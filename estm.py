@@ -42,9 +42,10 @@ class ESTM:
                     for elm in self.matrix[to_visit_x][to_visit_y]:
                         tile_rules = self.rules[elm]
                         rx,ry = nx-to_visit_x,ny-to_visit_y
-                        mapp = tile_rules[(rx,ry)]
-                        for e in mapp:
-                            ammissible_values_for_neighbours.add(e)
+                        if (rx,ry) in tile_rules.keys():
+                            mapp = tile_rules[(rx,ry)]
+                            for e in mapp:
+                                ammissible_values_for_neighbours.add(e)
                     if len(ammissible_values_for_neighbours) == 0:
                         raise Exception('Could not collapse!')
                     self.matrix[nx][ny] = self.matrix[nx][ny].intersection(ammissible_values_for_neighbours)
@@ -53,9 +54,9 @@ class ESTM:
 
 
     def solve(self):
-       
+        i = 0
         while not self.check_finished():
-            print('***ITERATION***')
+            print('ITERATION {i}: COLLAPSED {num_collapsed}'.format(i=i,num_collapsed=len([e  for e in self.entropies.values() if e == 0])))
             not_visited_entropies = {k:v for k,v in self.entropies.items() if k not in self.visited}
             possible_tiles = [k for k,v in not_visited_entropies.items() if v == min(not_visited_entropies.values())]
             rd_x, rd_y = rd.choices(possible_tiles)[0]
@@ -71,4 +72,5 @@ class ESTM:
             self.matrix[rd_x][rd_y] = {chosen_elm}
             self.entropies[(rd_x,rd_y)] = self.shannon_entropy(self.matrix[rd_x][rd_y])
             self.propagate(rd_x, rd_y)
+            i+=1
         return self.matrix
