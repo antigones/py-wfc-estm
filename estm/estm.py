@@ -26,8 +26,6 @@ class ESTM:
         return np.log(np.sum(weight)) - (np.sum(weight * np.log(weight)) / np.sum(weight))
     
     def propagate(self, x, y):
-        # la union di tutte le scelte che ogni singola scelta può avere in una determinata direzione,
-        # messa a confronto con quel che c'è già
         to_visit = set()
         to_visit.add((x,y))
         prop_visited = set()
