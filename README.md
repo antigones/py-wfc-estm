@@ -1,7 +1,10 @@
 # py-wfc-estm
+
 "Even Simpler Tile Model", like explained in:
 
 https://robertheaton.com/2018/12/17/wavefunction-collapse-algorithm/
+
+![Output image](./imgs/surf_boat.jpg)
 
 Sample usage:
 
