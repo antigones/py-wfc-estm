@@ -1,9 +1,11 @@
 
 
 from colorama import just_fix_windows_console, Fore, Style
+from estm.estm import ESTM
 
-from estm import ESTM
-from estm_rule_parser import ESTMRuleParser
+from estm.estm_rule_parser import ESTMRuleParser
+
+
 just_fix_windows_console()
 
 

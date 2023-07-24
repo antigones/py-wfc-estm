@@ -1,9 +1,9 @@
-from collections import defaultdict
+
 import random as rd
 import numpy as np
 import math
 
-from utils import get_neighbours
+from estm.utils import get_neighbours
 
 class ESTM:
 

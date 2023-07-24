@@ -12,7 +12,7 @@ CSSSSSSSSS
 """
 
 from collections import Counter, defaultdict
-from utils import get_neighbours
+from estm.utils import get_neighbours
 
 
 class ESTMRuleParser():
