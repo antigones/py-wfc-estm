@@ -7,8 +7,7 @@ from estm_rule_parser import ESTMRuleParser
 just_fix_windows_console()
 
 
-def pretty_print(matrix):
-    color_map = {'L':Fore.GREEN,'C':Fore.YELLOW,'S':Fore.BLUE,'D':Fore.CYAN}
+def pretty_print(matrix, color_map):
     out = list()
     for elm in matrix:
         contents = [tuple(x)[0] for x in elm]
@@ -37,16 +36,16 @@ if __name__ == "__main__":
             'LLLLLCLLCC',
             'LLLLCSCCSS',
             'LLLCSSSSSS',
-            'LLCSSSSSSS',
-            'LCSSSSSSSS',
+            'LLCSSSBSSS',
+            'LCSSSSSSKS',
             'CSSSSSSSSS'
             ]
     rule_parser = ESTMRuleParser(img)
     rules, weights = rule_parser.calc_rules()
-    print(rules)
-    print(weights)
-    wfc = ESTM(size=5, rules=rules, weights=weights)
+
+    wfc = ESTM(size=10, rules=rules, weights=weights)
     sol = wfc.solve()
-    pretty_print(sol)
-    emoji_map = {'L':'🌴','C':'⛱️ ','S':'🌊'}
+    # color_map = {'L':Fore.GREEN,'C':Fore.YELLOW,'S':Fore.BLUE,'D':Fore.CYAN}
+    # pretty_print(sol)
+    emoji_map = {'L':'🌴','C':'⛱️ ','S':'🌊','K':'🏄','B':'⛵'}
     emoji_print(sol,emoji_map)
