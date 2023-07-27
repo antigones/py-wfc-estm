@@ -28,6 +28,14 @@ def emoji_print(matrix,emoji_map):
     print('\n'.join(out))
 
 
+def multi_emoji_print(matrix,emoji_map):
+    out = list()
+    for elm in matrix:
+        contents = [tuple(x)[0] if len(x) == 1 else ' ' for x in elm]
+        content = [emoji_map[x] for x in contents]
+        out.append("".join(content))
+    print('\n'.join(out))
+
 if __name__ == "__main__":
    
     img = [
@@ -38,16 +46,28 @@ if __name__ == "__main__":
             'LLLLLCLLCC',
             'LLLLCSCCSS',
             'LLLCSSSSSS',
-            'LLCSSSBSSS',
-            'LCSSSSSSKS',
+            'LLCSSSSSSS',
+            'LCSSSSSSSS',
             'CSSSSSSSSS'
             ]
     rule_parser = ESTMRuleParser(img)
     rules,weights = rule_parser.calc_rules()
 
-    wfc = ESTM(size=10,rules=rules,weights=weights)
-    sol = wfc.solve()
+    wfc = ESTM(size=30,rules=rules,weights=weights)
+    success, sol, sol_steps, stats = wfc.solve()
     # color_map = {'L':Fore.GREEN,'C':Fore.YELLOW,'S':Fore.BLUE,'K':Fore.CYAN, 'B':Fore.RED}
     # pretty_print(sol)
-    emoji_map = {'L':'🌴','C':'⛱️ ','S':'🌊','K':'🏄','B':'⛵'}
+    emoji_map = {'L':'🌴','C':'⛱️ ','S':'🌊','K':'🏄','B':'⛵',' ':'❓'}
     emoji_print(sol,emoji_map)
+    print()
+    print()
+    if not success:
+        print('Cound not collapse!')
+    else:
+        for stat in stats:
+            i,c = stat
+            print('{i};{num_collapsed}'.format(i=i,num_collapsed=c))
+    
+    #for step in sol_steps:
+    #   multi_emoji_print(step, emoji_map)
+    #    print()

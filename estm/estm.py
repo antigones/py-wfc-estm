@@ -2,6 +2,7 @@
 import random as rd
 import numpy as np
 import math
+from copy import deepcopy
 
 from estm.utils import get_neighbours
 
@@ -14,51 +15,64 @@ class ESTM:
         self.rules = rules
         self.weights = weights
         self.matrix = [[set(self.rules.keys()) for _ in range(self.size)] for _ in range(self.size)]
-        self.entropies = {(x,y):self.shannon_entropy(self.matrix[x][y]) for x in range(self.size) for y in range(self.size)} 
-        self.visited = set()
-    
+        self.entropies = {(x,y):self.shannon_entropy(self.matrix[x][y]) for x in range(self.size) for y in range(self.size)}
+        self.steps = list()
+        self.stats = list()
 
     def check_finished(self):
-        return all(e == 0 for e in self.entropies.values())
+        return all(e < 0 for e in self.entropies.values())
     
     def shannon_entropy(self,tile):
-        weight = [self.weights[x] for x in tile]
-        return np.log(np.sum(weight)) - (np.sum(weight * np.log(weight)) / np.sum(weight))
+        weights = [self.weights[x] for x in tile]
+        entropy = np.log(np.sum(weights)) - (np.sum(weights * np.log(weights)) / np.sum(weights))
+        entropy_with_noise = entropy - (rd.random() / 1000)
+        return entropy_with_noise
     
     def propagate(self, x, y):
-        to_visit = set()
-        to_visit.add((x,y))
-        prop_visited = set()
-        while len(to_visit) > 0:
-            to_visit_x, to_visit_y = to_visit.pop()
-            prop_visited.add((to_visit_x,to_visit_y))
+        in_wave = set()
+        in_wave.add((x,y))
+        wave_visited = set()
+        while len(in_wave) > 0:
+            to_visit_x, to_visit_y = in_wave.pop()
+            wave_visited.add((to_visit_x,to_visit_y))
             neighbours = get_neighbours(to_visit_x, to_visit_y, self.height, self.width)
             for neighbour in neighbours:
                 nx,ny = neighbour
-                if neighbour not in prop_visited and self.entropies[(nx,ny)] != 0:
-                    ammissible_values_for_neighbours = set()
-                    for elm in self.matrix[to_visit_x][to_visit_y]:
-                        tile_rules = self.rules[elm]
-                        rx,ry = nx-to_visit_x,ny-to_visit_y
-                        if (rx,ry) in tile_rules.keys():
-                            mapp = tile_rules[(rx,ry)]
-                            for e in mapp:
-                                ammissible_values_for_neighbours.add(e)
-                    if len(ammissible_values_for_neighbours) == 0:
-                        raise Exception('Could not collapse!')
-                    self.matrix[nx][ny] = self.matrix[nx][ny].intersection(ammissible_values_for_neighbours)
-                    self.entropies[(nx,ny)] = self.shannon_entropy(self.matrix[nx][ny])
-                    to_visit.add((nx,ny))
+                # propagate by pushing compatible tiles to all neighbours
+                ammissible_values_for_neighbours = set()
+                for elm in self.matrix[to_visit_x][to_visit_y]:
+                    tile_rules = self.rules[elm]
+                    rx,ry = nx-to_visit_x,ny-to_visit_y
+                    if (rx,ry) in tile_rules.keys():
+                        ammissible_values_for_neighbours=ammissible_values_for_neighbours.union(tile_rules[(rx,ry)])
+                if len(ammissible_values_for_neighbours) == 0:
+                    raise Exception('Something really strange happened here')
+                intsx: set = self.matrix[nx][ny].intersection(ammissible_values_for_neighbours)
+                if len(intsx) == 0:
+                    raise Exception('Could not collapse!')
+                if intsx != self.matrix[nx][ny]:
+                    in_wave.add((nx,ny)) # only queue changed tiles
+                
+                self.matrix[nx][ny] = intsx
+                self.entropies[(nx,ny)] = self.shannon_entropy(self.matrix[nx][ny])
+                
+                
+
 
 
     def solve(self):
+        self.stats = list()
         i = 0
         while not self.check_finished():
-            print('ITERATION {i}: COLLAPSED {num_collapsed}'.format(i=i,num_collapsed=len([e  for e in self.entropies.values() if e == 0])))
-            not_visited_entropies = {k:v for k,v in self.entropies.items() if k not in self.visited}
-            possible_tiles = [k for k,v in not_visited_entropies.items() if v == min(not_visited_entropies.values())]
-            rd_x, rd_y = rd.choices(possible_tiles)[0]
-            self.visited.add((rd_x,rd_y))
+            self.steps.append(deepcopy(self.matrix))
+            self.stats.append((i, len([e  for e in self.entropies.values() if e < 0]))) # iteration, # collapsed tiles
+           
+            # not_visited_entropies = {k:v for k,v in self.entropies.items() if k not in self.visited}
+            not_visited_entropies = {k:v for k,v in self.entropies.items() if v > 0}
+            # possible_tiles = [k for k,v in not_visited_entropies.items() if v == min(not_visited_entropies.values())]
+            possible_tile = min(not_visited_entropies, key=not_visited_entropies.get)
+            #rd_x, rd_y = rd.choices(possible_tile)[0]
+            rd_x, rd_y =possible_tile
             
             sorted_set = sorted(self.matrix[rd_x][rd_y])
             p = list()
@@ -69,6 +83,12 @@ class ESTM:
             chosen_elm = chosen_elm[0]
             self.matrix[rd_x][rd_y] = {chosen_elm}
             self.entropies[(rd_x,rd_y)] = self.shannon_entropy(self.matrix[rd_x][rd_y])
-            self.propagate(rd_x, rd_y)
+            try:
+                self.propagate(rd_x, rd_y)
+            except:
+                return False, self.matrix, self.steps, self.stats
             i+=1
-        return self.matrix
+        
+        self.steps.append(deepcopy(self.matrix))
+        self.stats.append((i, len([e  for e in self.entropies.values() if e < 0]))) # iteration, # collapsed tiles
+        return True, self.matrix, self.steps, self.stats
