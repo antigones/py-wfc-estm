@@ -74,7 +74,6 @@ class ESTM:
             
             not_visited_entropies = {k:v-(rd.random() / 1000) for k,v in self.entropies.items() if v > 0}
             min_entropy_tile = min(not_visited_entropies, key=not_visited_entropies.get)
-            print(min_entropy_tile)
             min_x, min_y =min_entropy_tile
             chosen_elm = self.choose_tile_value(min_entropy_tile)
             self.matrix[min_x][min_y] = {chosen_elm}
