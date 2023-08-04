@@ -1,7 +1,6 @@
 
 import random as rd
 import numpy as np
-import math
 from copy import deepcopy
 
 from estm.utils import get_neighbours
@@ -10,8 +9,6 @@ class ESTM:
 
     def __init__(self, size, rules, weights):
         self.size = size
-        self.height = size
-        self.width = size
         self.rules = rules
         self.weights = weights
         self.matrix = [[set(self.rules.keys()) for _ in range(self.size)] for _ in range(self.size)]
@@ -20,13 +17,12 @@ class ESTM:
         self.stats = list()
 
     def check_finished(self):
-        return all(e < 0 for e in self.entropies.values())
+        return all(e <= 0 for e in self.entropies.values())
     
     def shannon_entropy(self,tile):
         weights = [self.weights[x] for x in tile]
         entropy = np.log(np.sum(weights)) - (np.sum(weights * np.log(weights)) / np.sum(weights))
-        entropy_with_noise = entropy - (rd.random() / 1000)
-        return entropy_with_noise
+        return entropy
     
     def propagate(self, x, y):
         in_wave = set()
@@ -35,7 +31,7 @@ class ESTM:
         while len(in_wave) > 0:
             to_visit_x, to_visit_y = in_wave.pop()
             wave_visited.add((to_visit_x,to_visit_y))
-            neighbours = get_neighbours(to_visit_x, to_visit_y, self.height, self.width)
+            neighbours = get_neighbours(to_visit_x, to_visit_y, self.size, self.size)
             for neighbour in neighbours:
                 nx,ny = neighbour
                 # propagate by pushing compatible tiles to all neighbours
@@ -56,39 +52,39 @@ class ESTM:
                 self.matrix[nx][ny] = intsx
                 self.entropies[(nx,ny)] = self.shannon_entropy(self.matrix[nx][ny])
                 
-                
-
-
-
+    def choose_tile_value(self, tile):
+        x, y = tile
+        tile_set = self.matrix[x][y]
+        filtered_weights = {v:self.weights[v] for v in tile_set}
+        norm_p = [filtered_weights[x]/sum(filtered_weights.values()) for x in filtered_weights]
+        chosen_values = rd.choices(population=list(filtered_weights.keys()),weights=norm_p,k=1)
+        chosen_value = chosen_values[0]
+        return chosen_value
+    
     def solve(self):
         self.stats = list()
         i = 0
         while not self.check_finished():
             self.steps.append(deepcopy(self.matrix))
-            self.stats.append((i, len([e  for e in self.entropies.values() if e < 0]))) # iteration, # collapsed tiles
-           
+            self.stats.append((i, len([e  for e in self.entropies.values() if e == 0]))) # iteration, # collapsed tiles
+            # as per the post, we should not micro-change entropies, choose among mins instead
             # not_visited_entropies = {k:v for k,v in self.entropies.items() if k not in self.visited}
-            not_visited_entropies = {k:v for k,v in self.entropies.items() if v > 0}
             # possible_tiles = [k for k,v in not_visited_entropies.items() if v == min(not_visited_entropies.values())]
-            possible_tile = min(not_visited_entropies, key=not_visited_entropies.get)
-            #rd_x, rd_y = rd.choices(possible_tile)[0]
-            rd_x, rd_y =possible_tile
+            # rd_x, rd_y = rd.choices(possible_tile)[0]
             
-            sorted_set = sorted(self.matrix[rd_x][rd_y])
-            p = list()
-            for v in sorted_set:
-                p.append(self.weights[v])
-            norm_p = [x+((1-sum(p))/len(p)) for x in p]
-            chosen_elm = rd.choices(population=tuple(sorted_set),weights=norm_p,k=1)
-            chosen_elm = chosen_elm[0]
-            self.matrix[rd_x][rd_y] = {chosen_elm}
-            self.entropies[(rd_x,rd_y)] = self.shannon_entropy(self.matrix[rd_x][rd_y])
+            not_visited_entropies = {k:v-(rd.random() / 1000) for k,v in self.entropies.items() if v > 0}
+            min_entropy_tile = min(not_visited_entropies, key=not_visited_entropies.get)
+            print(min_entropy_tile)
+            min_x, min_y =min_entropy_tile
+            chosen_elm = self.choose_tile_value(min_entropy_tile)
+            self.matrix[min_x][min_y] = {chosen_elm}
+            self.entropies[(min_x,min_y)] = self.shannon_entropy(self.matrix[min_x][min_y])
             try:
-                self.propagate(rd_x, rd_y)
+                self.propagate(min_x, min_y)
             except:
                 return False, self.matrix, self.steps, self.stats
             i+=1
         
         self.steps.append(deepcopy(self.matrix))
-        self.stats.append((i, len([e  for e in self.entropies.values() if e < 0]))) # iteration, # collapsed tiles
+        self.stats.append((i, len([e  for e in self.entropies.values() if e == 0]))) # iteration, # collapsed tiles
         return True, self.matrix, self.steps, self.stats

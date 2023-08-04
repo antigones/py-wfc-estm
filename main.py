@@ -50,6 +50,7 @@ if __name__ == "__main__":
             'LCSSSSSSSS',
             'CSSSSSSSSS'
             ]
+    
     rule_parser = ESTMRuleParser(img)
     rules,weights = rule_parser.calc_rules()
 
@@ -58,7 +59,7 @@ if __name__ == "__main__":
     # color_map = {'L':Fore.GREEN,'C':Fore.YELLOW,'S':Fore.BLUE,'K':Fore.CYAN, 'B':Fore.RED}
     # pretty_print(sol)
     emoji_map = {'L':'🌴','C':'⛱️ ','S':'🌊','K':'🏄','B':'⛵',' ':'❓'}
-    emoji_print(sol,emoji_map)
+    multi_emoji_print(sol,emoji_map)
     print()
     print()
     if not success:
@@ -66,7 +67,7 @@ if __name__ == "__main__":
     else:
         for stat in stats:
             i,c = stat
-            print('{i};{num_collapsed}'.format(i=i,num_collapsed=c))
+            print('{num_collapsed}'.format(i=i,num_collapsed=c))
     
     #for step in sol_steps:
     #   multi_emoji_print(step, emoji_map)
