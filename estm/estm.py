@@ -2,7 +2,6 @@
 import random as rd
 import numpy as np
 from copy import deepcopy
-
 from estm.utils import get_neighbours
 
 class ESTM:
@@ -27,10 +26,9 @@ class ESTM:
     def propagate(self, x, y):
         in_wave = set()
         in_wave.add((x,y))
-        wave_visited = set()
+       
         while len(in_wave) > 0:
             to_visit_x, to_visit_y = in_wave.pop()
-            wave_visited.add((to_visit_x,to_visit_y))
             neighbours = get_neighbours(to_visit_x, to_visit_y, self.size, self.size)
             for neighbour in neighbours:
                 nx,ny = neighbour
@@ -48,7 +46,7 @@ class ESTM:
                     raise Exception('Could not collapse!')
                 if intsx != self.matrix[nx][ny]:
                     in_wave.add((nx,ny)) # only queue changed tiles
-                
+
                 self.matrix[nx][ny] = intsx
                 self.entropies[(nx,ny)] = self.shannon_entropy(self.matrix[nx][ny])
                 
@@ -66,15 +64,14 @@ class ESTM:
         i = 0
         while not self.check_finished():
             self.steps.append(deepcopy(self.matrix))
-            self.stats.append((i, len([e  for e in self.entropies.values() if e == 0]))) # iteration, # collapsed tiles
+            self.stats.append((i, sum(1 for e in self.entropies.values() if e == 0))) # iteration, # collapsed tiles
             # as per the post, we should not micro-change entropies, choose among mins instead
             # not_visited_entropies = {k:v for k,v in self.entropies.items() if k not in self.visited}
             # possible_tiles = [k for k,v in not_visited_entropies.items() if v == min(not_visited_entropies.values())]
             # rd_x, rd_y = rd.choices(possible_tile)[0]
-            
             not_visited_entropies = {k:v-(rd.random() / 1000) for k,v in self.entropies.items() if v > 0}
             min_entropy_tile = min(not_visited_entropies, key=not_visited_entropies.get)
-            min_x, min_y =min_entropy_tile
+            min_x, min_y = min_entropy_tile
             chosen_elm = self.choose_tile_value(min_entropy_tile)
             self.matrix[min_x][min_y] = {chosen_elm}
             self.entropies[(min_x,min_y)] = self.shannon_entropy(self.matrix[min_x][min_y])
@@ -85,5 +82,5 @@ class ESTM:
             i+=1
         
         self.steps.append(deepcopy(self.matrix))
-        self.stats.append((i, len([e  for e in self.entropies.values() if e == 0]))) # iteration, # collapsed tiles
+        self.stats.append((i, sum(1 for e in self.entropies.values() if e == 0))) # iteration, # collapsed tiles
         return True, self.matrix, self.steps, self.stats

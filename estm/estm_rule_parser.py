@@ -19,7 +19,7 @@ class ESTMRuleParser():
 
     def __init__(self, matrix_str_repr: str):
         self.height = len(matrix_str_repr)
-        self.width = len(matrix_str_repr[0])
+        self.width = len(matrix_str_repr)
         self.matrix = [list(matrix_str_repr[i]) for i in range(len(matrix_str_repr))]
     
     def calc_rules(self):
@@ -36,8 +36,8 @@ class ESTMRuleParser():
                     else:
                         rule_dict[cur_elm][(rx,ry)].add(self.matrix[nx][ny])
         flattened_matrix = "".join("".join(line) for line in self.matrix)
-        counts = Counter(flattened_matrix)
-        for k in counts:
-            counts[k] /= len(flattened_matrix)
-        weights = counts
+        weights = Counter(flattened_matrix)
+        #counts = Counter(flattened_matrix)
+        #for k in weights:
+        #    weights[k] /= len(flattened_matrix)
         return rule_dict, weights
